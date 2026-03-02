@@ -13,5 +13,9 @@ A full-stack travel booking web application.
 - React
 - TypeScript
 
+## Database Design
+![ER Diagram](./docs/erd.png)
+
+
 ## Project status
 Started: 2026/03/02
