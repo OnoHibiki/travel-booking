@@ -9,21 +9,21 @@ export class HotelsController {
     ) {}
 
     @Get()
-    findAllHotels(@Query(`prefecture`) prefecture?: string) {
+    findAll(@Query('prefecture') prefecture?: string) {
         //今はundefined許容
-        return this.hotelsService.findAllHotels();
+        return this.hotelsService.findAll();
     }
 
     @Get(':hotelId')
-    findOneHotel(@Param('hotelId', ParseIntPipe) hotelId: number) {
-        return this.hotelsService.findOneHotel(hotelId); //超再帰的・・・というわけでなく、ここで読んでいるのはServiceのfindOne
+    findOne(@Param('hotelId', ParseIntPipe) hotelId: number) {
+        return this.hotelsService.findOne(hotelId); 
     }
 
     // ------------------------------------
 
     @Get(':hotelId/rooms')
-    findRoom(@Param('hotelId', ParseIntPipe) hotelId: number) {
-        return this.roomsService.findRoom(hotelId);
+    findRooms(@Param('hotelId', ParseIntPipe) hotelId: number) {
+        return this.roomsService.findByHotelId(hotelId);
     }
 
 }
