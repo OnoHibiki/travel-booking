@@ -1,4 +1,12 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { RoomsService } from './rooms.service';
 
-@Controller('rooms')
-export class RoomsController {}
+@Controller('hotels/:hotelId/rooms')
+export class RoomsController {
+    constructor(private readonly roomsService: RoomsService) {}
+
+    @Get()
+    findByhotel(@Param('hotelId', ParseIntPipe) hotelId: number) {
+        return this.roomsService.findByHotelId(hotelId);
+    }
+}

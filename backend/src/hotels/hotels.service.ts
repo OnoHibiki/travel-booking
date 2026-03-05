@@ -16,6 +16,9 @@ export class HotelsService {
                 name: "Osaka Hotel",
                 prefecture: "大阪府",
                 rating:4
+            },
+            {
+                id: 3, //Test
             }
         ];
     }
