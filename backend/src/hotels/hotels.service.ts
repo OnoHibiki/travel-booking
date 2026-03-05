@@ -3,7 +3,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 @Injectable()
 export class HotelsService {
     //Get all hotels
-    findAll() {
+    findAllHotels() {
         return [
             {
                 id: 1,
@@ -21,8 +21,8 @@ export class HotelsService {
     }
     
     //Get a specific hotel's details
-    findOne(hotelId: number) {
-        const hotel = this.findAll().find((h) => h.id === hotelId);
+    findOneHotel(hotelId: number) {
+        const hotel = this.findAllHotels().find((h) => h.id === hotelId);
         
         //can't find hotel
         if(!hotel) {

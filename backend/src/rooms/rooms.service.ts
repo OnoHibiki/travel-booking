@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 export class RoomsService {
 
     //serch for Hotel's room
-    findByHotelId(hotelId: number) {
+    findRoom(hotelId: number) {
         const data = {
             1: [
                 { id: 1, name: 'Single Room', capacity: 1, price_day: 12000},
