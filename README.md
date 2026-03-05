@@ -24,3 +24,4 @@ A full-stack travel booking web application.
  - Started: 2026/03/02
  - ER Diagram completed: 2026/03/02
  - API Specification completed: 2026/03/03
+ - Implemented Hotels and Rooms API : 2026/03/05
