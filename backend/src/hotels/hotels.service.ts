@@ -19,7 +19,7 @@ export class HotelsService {
             }
         ];
     }
-
+    
     //Get a specific hotel's details
     findOne(hotelId: number) {
         const hotel = this.findAll().find((h) => h.id === hotelId);
