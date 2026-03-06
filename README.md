@@ -6,7 +6,7 @@ A full-stack travel booking web application.
 ## Tech Stack
 
 ### Backend
-- NestJS
+- NestJS(Node.js)
 - TypeScript
 
 ### Frontend
@@ -19,9 +19,15 @@ A full-stack travel booking web application.
 ## API
 [API Specification](./docs/api-spec.md)
 
+## Git Workflow
+This project follows a simple Git workflow using feature branches.
+- `main`: stable branch
+- `develop`: integration branch for development
+- `feature/*`: feature-specific branches
 
 ## Project status
  - Started: 2026/03/02
  - ER Diagram completed: 2026/03/02
  - API Specification completed: 2026/03/03
- - Implemented Hotels and Rooms API : 2026/03/05
+ - Implemented Hotels and Rooms API: 2026/03/05
+ - Added Git Workflow documentation: 2026/03/06
