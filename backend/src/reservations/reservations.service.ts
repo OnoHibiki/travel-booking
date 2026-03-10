@@ -1,8 +1,10 @@
 import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { CreateReservationDto } from './create-reservation.dto';
+import { RoomsService } from 'src/rooms/rooms.service';
 
 @Injectable()
 export class ReservationsService {
+    constructor(private readonly roomSerivce: RoomsService){}
     private reservations = [// TODO:Temporary test data (Pending DB integration) - 一時的なテストデータ（DB連携待ち）
         {
             id: 1,
@@ -23,6 +25,16 @@ export class ReservationsService {
         // Check minimum guest count - 最小宿泊人数のチェック
         if (guest_count < 1) {
             throw new BadRequestException(`Guest count must be at least 1. (宿泊人数は１以上で指定してください)`)
+        }
+
+        //Find room by room_id - room_idから部屋情報を取得
+        const room = this.roomSerivce.findOne(room_id);
+
+        // Check room capacity - 部屋の定数を予約人数が超えていないか確認
+        if(guest_count > room.capacity) {
+            throw new BadRequestException(
+                'Guest count exceeds room capacity. (宿泊人数が部屋の定員を超えています)'
+            );
         }
 
         //Validate that check-in date is before check-out date　-　チェックイン日がチェックアウト日より前であるかのチェック
@@ -52,7 +64,7 @@ export class ReservationsService {
         // Calculate total price based on duration of stay　-　宿泊数に基づいた合計金額の計算
         const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
         const howManyStayNight = (checkOutDate.getTime() - checkInDate.getTime()) /MILLISECONDS_PER_DAY;
-        const pricePerNight = 12000; //テストデータ
+        const pricePerNight = room.price_per_night;
         const totalPrice = howManyStayNight * pricePerNight;
 
         //Create New Reservation - 新しい予約を登録
