@@ -31,3 +31,4 @@ This project follows a simple Git workflow using feature branches.
  - API Specification completed: 2026/03/03
  - Implemented Hotels and Rooms API: 2026/03/05
  - Added Git Workflow documentation: 2026/03/06
+ - First self PR and merge lol (`feature/reservations` → `develop`): 2026/03/08
