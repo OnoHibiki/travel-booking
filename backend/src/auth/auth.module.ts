@@ -3,6 +3,8 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config'; // .env -　環境変数
+import { JwtStrategy } from './jwt.strategy';
+
 
 @Module({
   imports: [
@@ -13,6 +15,6 @@ import { ConfigModule } from '@nestjs/config'; // .env -　環境変数
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService]
+  providers: [AuthService, JwtStrategy],
 })
 export class AuthModule {}
