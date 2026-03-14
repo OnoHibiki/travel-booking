@@ -2,9 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class HotelsService {
-    //Get all hotels
+    //Get all hotels　-　ホテル一覧検索
     findAll() {
-        return [
+        return [ // Test Data - テストデータ
             {
                 id: 1,
                 name: "Tokyo Hotel",
@@ -18,12 +18,12 @@ export class HotelsService {
                 rating:4
             },
             {
-                id: 3, //Test
+                id: 3,
             }
         ];
     }
     
-    //Get a specific hotel's details
+    //Get a specific hotel's details　-　あるホテルの詳細を取得
     findOne(hotelId: number) {
         const hotel = this.findAll().find((h) => h.id === hotelId);
         

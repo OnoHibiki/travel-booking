@@ -4,8 +4,8 @@ import { RoomsService } from 'src/rooms/rooms.service';
 
 @Injectable()
 export class ReservationsService {
-    constructor(private readonly roomSerivce: RoomsService){}
-    private reservations = [// TODO:Temporary test data (Pending DB integration) - 一時的なテストデータ（DB連携待ち）
+    constructor(private readonly roomsSerivce: RoomsService) {}
+    private reservations = [// Temporary test data (Pending DB integration) - 一時的なテストデータ（DB連携待ち）
         {
             id: 1,
             user_id: 1,
@@ -18,7 +18,7 @@ export class ReservationsService {
         },
     ];
 
-    createReservation(createReservationDto: CreateReservationDto) {
+    createReservation(userId: number, createReservationDto: CreateReservationDto) {
 
         const { room_id, guest_count, check_in, check_out} = createReservationDto;
         
@@ -28,7 +28,7 @@ export class ReservationsService {
         }
 
         //Find room by room_id - room_idから部屋情報を取得
-        const room = this.roomSerivce.findOne(room_id);
+        const room = this.roomsSerivce.findOne(room_id);
 
         // Check room capacity - 部屋の定数を予約人数が超えていないか確認
         if(guest_count > room.capacity) {
@@ -70,7 +70,7 @@ export class ReservationsService {
         //Create New Reservation - 新しい予約を登録
         const newReservation = {
             id: this.reservations.length + 1,
-            user_id: 1, //TODO：Test - 仮
+            user_id: 1, //Test - 仮
             room_id,
             guest_count,
             check_in,
@@ -85,12 +85,12 @@ export class ReservationsService {
     }
 
     //Get My Reservation - 自分の予約一覧を取得
-    findMyReservations() {
+    findMyReservations(userId: number) {
         return this.reservations.filter((reservation) => reservation.user_id === 1);
     }
     
     //Cancel the reservation with the specified ID - 指定したIDの予約をキャンセル
-    cancelReservation(reservationId: number) {
+    cancelReservation(userId:number, reservationId: number) {
         const reservation = this.reservations.find((item) => item.id === reservationId);
 
         //Check if reservation by ID - 引数のIDの予約があるか確認
@@ -99,7 +99,7 @@ export class ReservationsService {
         }
 
         //Verify ownership (Temporary: fixed user_id check) - 所有権の確認　TODO：今は固定値
-        if(reservation.user_id !== 1) {
+        if(reservation.user_id !== userId) {
             throw new NotFoundException('Reservation is not found. (対象の予約が見つかりません)');
         }
 

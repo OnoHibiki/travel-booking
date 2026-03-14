@@ -1,28 +1,39 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { ReservationsService } from './reservations.service';
 import { CreateReservationDto } from './create-reservation.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import type { RequestWithUser } from 'src/common/interfaces/request-with-user.interface';
 
 
+
+@UseGuards(JwtAuthGuard)
 @Controller()
 export class ReservationsController {
     constructor(private readonly reservationsService: ReservationsService){}
 
-    //Create New Reservation - 新規予約
+    // Create New Reservation - 新規予約
     @Post('reservations')
-    create(@Body() createReservationDto: CreateReservationDto) {
-        return this.reservationsService.createReservation(createReservationDto);
+    create(@Req() req: RequestWithUser, @Body() createReservationDto: CreateReservationDto) {
+        return this.reservationsService.createReservation(
+            req.user.userId,
+            createReservationDto,
+        );
     }
 
-    //Search for My Reservations - 自分の予約を一覧取得
+    // Get My Reservations - 自分の予約を一覧取得
     @Get('me/reservations')
-    findMyReservations() {
-        return this.reservationsService.findMyReservations();
+    findMyReservations(@Req() req: RequestWithUser) {
+        return this.reservationsService.findMyReservations(req.user.userId);
     }
 
-    //Cancel a specific reservations - 指定したIDの予約をキャンセル
+    // Cancel a specific reservation - 指定したIDの予約をキャンセル
     @Patch('reservations/:reservationId/cancel')
     cancel(
-        @Param('reservationId', ParseIntPipe) reservationId: number){
-            return this.reservationsService.cancelReservation(reservationId);
+        @Req() req: RequestWithUser,
+        @Param('reservationId', ParseIntPipe) reservationId: number) {
+            return this.reservationsService.cancelReservation(
+                req.user.userId,
+                reservationId
+            );
         }        
 }
