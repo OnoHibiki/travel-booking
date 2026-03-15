@@ -39,10 +39,6 @@
 ### Auth Required (認証必須)
 
 #### Auth (認証)
-- `POST /auth/logout`
-  - Description: Logout current user - ログアウトしてJWTを破棄
-  - Auth: Required
-
 - `PATCH /auth/password`
   - Description: Change current user password - パスワード変更
   - Auth: Required
