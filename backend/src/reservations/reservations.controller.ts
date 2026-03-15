@@ -26,6 +26,14 @@ export class ReservationsController {
         return this.reservationsService.findMyReservations(req.user.userId);
     }
 
+    // Get My detail Reservation - 予約詳細を取得
+    @Get('reservations/:reservationId')
+    findOne(
+        @Req() req: RequestWithUser, @Param('reservationId', ParseIntPipe) reservationId: number
+    ) {
+        return this.reservationsService.findOne(req.user.userId, reservationId);
+    }
+
     // Cancel a specific reservation - 指定したIDの予約をキャンセル
     @Patch('reservations/:reservationId/cancel')
     cancel(

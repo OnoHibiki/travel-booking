@@ -1,27 +1,24 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt'; //Hash - ハッシュ
 import { CreateUserDto } from './create-user.dto';
+import { User } from 'src/common/interfaces/user.interface';
+import { UsersService } from 'src/users/users.service';
     
-type User = {
-    id: number;
-    name: string;
-    email: string;
-    prefecture?: string;
-    password_hash: string;
-};
 
 @Injectable()
 export class AuthService {
-    private users: User[] = [];
-    constructor(private readonly jwtService: JwtService){}
+    constructor(
+        private readonly usersService: UsersService,
+        private readonly jwtService: JwtService
+    ){}
 
-    // Create new User - 新規ユーザ登録　-----------------------------------------
+    // Create new User - 新規ユーザ登録
     async register(createUserDto: CreateUserDto) {
         const { name, email, prefecture, password } = createUserDto;
 
         // Check if the email already exists　-　email重複チェック
-        const existingUser = this.users.find((user) => user.email === email);
+        const existingUser = this.usersService.findByEmail(email);
         if(existingUser) {
             throw new ConflictException(
                 'Email already registered. (このメールアドレスは既に登録されています)'
@@ -31,40 +28,68 @@ export class AuthService {
         // Hash the password before saving - passwordのハッシュ化
         const passwordHash = await bcrypt.hash(password, 10);
 
-        // Create the new user - 新規ユーザの作成
+        // Create a new user - 新規ユーザの作成
         const newUser: User = {
-            id: this.users.length + 1,
+            id: Date.now(), // Todo: Test -　仮
             name,
             email,
             prefecture,
             password_hash: passwordHash
         };
 
-        this.users.push(newUser);
+        this.usersService.createUser(newUser);
 
         return {
             id: newUser.id,
             name: newUser.name,
             email: newUser.email,
             prefecture: newUser.prefecture,
+            // Not return pass - パスワードハッシュは返さない
         };
     }
 
-    // Login logic - ログイン機能　-------------------------------------------------
-    async login(email: string, password: string) {
-        const user = this.users.find((user) => user.email === email);
+    // Change current user password - パスワード変更
+    async updatePassword(userId: number, currentPassword: string, newPassword: string) {
+        const user = this.usersService.findById(userId);
+        
+        // Compare current password with stored hash - 現在のパスワード確認
+        const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
 
-        if(!user) {
+        if(!isMatch){
+            throw new UnauthorizedException(
+                'Current password is incorrect. (現在のパスワードが正しくありません)'
+            );
+        }
+
+        // Prevent using the same password - 同じパスワードは禁止
+        if(currentPassword === newPassword) {
+            throw new BadRequestException(
+                'New password must be different. (新しいパスワードは現在のものと異なる必要があります)'
+            );
+        }
+
+        const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+        return this.usersService.updatePassword(userId, newPasswordHash);
+        
+    }
+
+    // Login logic - ログイン機能　
+    async login(email: string, password: string) {
+        const user = this.usersService.findByEmail(email);
+        if (!user) {
             throw new UnauthorizedException(
                 'Invalid credentials. (メールアドレスまたはパスワードが正しくありません)'
             );
-        }
+}
         
         // Compare the input password with the stored password hash - 入力されたパスワードと、登録されているパスワードのハッシュとで比較
         const isMatch = await bcrypt.compare(password, user.password_hash);
 
         if(!isMatch) {
-            throw new UnauthorizedException('Invalid credentials. (メールアドレスまたはパスワードが正しくありません)');
+            throw new UnauthorizedException(
+                'Invalid credentials. (メールアドレスまたはパスワードが正しくありません)'
+            );
         }
 
         // Payload for JWT token - JWTトークンに含めるデータ
@@ -78,6 +103,5 @@ export class AuthService {
         };
         
     }
-
 
 }
