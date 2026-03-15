@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt'; //Hash - ハッシュ
 import { CreateUserDto } from './create-user.dto';
@@ -13,7 +13,7 @@ export class AuthService {
         private readonly jwtService: JwtService
     ){}
 
-    // Create new User - 新規ユーザ登録　-----------------------------------------
+    // Create new User - 新規ユーザ登録
     async register(createUserDto: CreateUserDto) {
         const { name, email, prefecture, password } = createUserDto;
 
@@ -48,21 +48,48 @@ export class AuthService {
         };
     }
 
-    // Login logic - ログイン機能　-------------------------------------------------
+    // Change current user password - パスワード変更
+    async updatePassword(userId: number, currentPassword: string, newPassword: string) {
+        const user = this.usersService.findById(userId);
+        
+        // Compare current password with stored hash - 現在のパスワード確認
+        const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+
+        if(!isMatch){
+            throw new UnauthorizedException(
+                'Current password is incorrect. (現在のパスワードが正しくありません)'
+            );
+        }
+
+        // Prevent using the same password - 同じパスワードは禁止
+        if(currentPassword === newPassword) {
+            throw new BadRequestException(
+                'New password must be different. (新しいパスワードは現在のものと異なる必要があります)'
+            );
+        }
+
+        const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+        return this.usersService.updatePassword(userId, newPasswordHash);
+        
+    }
+
+    // Login logic - ログイン機能　
     async login(email: string, password: string) {
         const user = this.usersService.findByEmail(email);
-
-        if(!user) {
+        if (!user) {
             throw new UnauthorizedException(
                 'Invalid credentials. (メールアドレスまたはパスワードが正しくありません)'
             );
-        }
+}
         
         // Compare the input password with the stored password hash - 入力されたパスワードと、登録されているパスワードのハッシュとで比較
         const isMatch = await bcrypt.compare(password, user.password_hash);
 
         if(!isMatch) {
-            throw new UnauthorizedException('Invalid credentials. (メールアドレスまたはパスワードが正しくありません)');
+            throw new UnauthorizedException(
+                'Invalid credentials. (メールアドレスまたはパスワードが正しくありません)'
+            );
         }
 
         // Payload for JWT token - JWTトークンに含めるデータ
@@ -76,6 +103,5 @@ export class AuthService {
         };
         
     }
-
 
 }

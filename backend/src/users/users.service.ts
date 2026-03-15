@@ -1,10 +1,20 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { UpdateUserDto } from './update-user.dto';
 import { User } from 'src/common/interfaces/user.interface';
 
 @Injectable()
 export class UsersService {
     private users : User[] = [];
+
+    // Find user by ID - IDでユーザを検索
+    findById(userId: number) {
+        const user = this.users.find((user) => user.id === userId);
+        if(!user) {
+            throw new NotFoundException('User not found. (ユーザが見つかりません)');
+        }
+        return user;
+    }
+
 
     // Find user by email - emailでユーザを検索
     findByEmail(email: string) {
@@ -75,6 +85,24 @@ export class UsersService {
             email: user.email,
             prefecture: user.prefecture,
         };
+    }
+
+    // Update user password - ユーザのパスワードを更新
+    updatePassword(userId: number, password_hash: string) {
+        const user = this.users.find((user) => user.id === userId);
+
+        if(!user) {
+            throw new NotFoundException('User not found. (ユーザが見つかりません)')
+        }
+
+        user.password_hash = password_hash;
+
+        return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            prefecture: user.prefecture,
+        }
     }
 
 
