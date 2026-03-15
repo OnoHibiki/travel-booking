@@ -4,6 +4,8 @@ import { AuthService } from './auth.service';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config'; // .env -　環境変数
 import { JwtStrategy } from './jwt.strategy';
+import { UsersModule } from 'src/users/users.module';
+import { UsersService } from 'src/users/users.service';
 
 
 @Module({
@@ -13,6 +15,7 @@ import { JwtStrategy } from './jwt.strategy';
       secret: process.env.JWT_SECRET!,
       signOptions: { expiresIn: '30m'},
     }),
+    UsersModule
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

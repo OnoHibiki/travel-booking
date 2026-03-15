@@ -1,16 +1,21 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { UpdateUserDto } from './update-user.dto';
+import { User } from 'src/common/interfaces/user.interface';
 
 @Injectable()
 export class UsersService {
-    private users = [
-        {   //Test users - テストユーザー
-            id: 1,
-            name: 'hibiki',
-            email: 'hibiki@test.com',
-            prefecture: '大阪府',
-        },
-    ];
+    private users : User[] = [];
+
+    // Find user by email - emailでユーザを検索
+    findByEmail(email: string) {
+        return this.users.find((user) => user.email === email);
+    }
+
+    // Create a new user - 新しいユーザを作成
+    createUser(user: User) {
+        this.users.push(user);
+        return user; 
+    }
 
     // Get by self info - 自分の情報を取得
     findMe(userId: number) {
@@ -20,7 +25,12 @@ export class UsersService {
             throw new NotFoundException('User not found. (ユーザーが見つかりません)');
         }
 
-        return user;
+        return { // Not return pass - パスワードハッシュは返さない
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            prefecture: user.prefecture,
+        };
     }
     
     // Change by my info - 自分の情報を変更
@@ -58,6 +68,13 @@ export class UsersService {
         if(updateUserDto.prefecture !== undefined) {
             user.prefecture = updateUserDto.prefecture;
         }
+
+        return { // Not return pass - パスワードハッシュは返さない
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            prefecture: user.prefecture,
+        };
     }
 
 

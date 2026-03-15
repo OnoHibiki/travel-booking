@@ -2,21 +2,21 @@ import { Injectable, BadRequestException, NotFoundException, ConflictException }
 import { CreateReservationDto } from './create-reservation.dto';
 import { RoomsService } from 'src/rooms/rooms.service';
 
+export interface Reservation {
+    id: number;
+    user_id: number;
+    room_id: number;
+    guest_count: number;
+    check_in: string;
+    check_out: string;
+    total_price: number;
+    status: 'CONFIRMED' | 'CANCELLED' ; 
+}
+
 @Injectable()
 export class ReservationsService {
     constructor(private readonly roomsSerivce: RoomsService) {}
-    private reservations = [// Temporary test data (Pending DB integration) - 一時的なテストデータ（DB連携待ち）
-        {
-            id: 1,
-            user_id: 1,
-            room_id: 1,
-            guest_count: 2,
-            check_in: '2026-04-01',
-            check_out: '2026-04-03',
-            total_price: 24000,
-            status: 'CONFIRMED',
-        },
-    ];
+    private reservations: Reservation[] = [];
 
     createReservation(userId: number, createReservationDto: CreateReservationDto) {
 
@@ -68,9 +68,9 @@ export class ReservationsService {
         const totalPrice = howManyStayNight * pricePerNight;
 
         //Create New Reservation - 新しい予約を登録
-        const newReservation = {
+        const newReservation: Reservation = {
             id: this.reservations.length + 1,
-            user_id: 1, //Test - 仮
+            user_id: userId, //Test - 仮
             room_id,
             guest_count,
             check_in,
@@ -86,7 +86,42 @@ export class ReservationsService {
 
     //Get My Reservation - 自分の予約一覧を取得
     findMyReservations(userId: number) {
-        return this.reservations.filter((reservation) => reservation.user_id === 1);
+        return this.reservations.filter((reservation) => reservation.user_id === userId)
+                                .map((reservation) => ({
+                                    id: reservation.id,
+                                    room_id: reservation.room_id,
+                                    check_in: reservation.check_in,
+                                    check_out: reservation.check_out,
+                                    total_price: reservation.total_price,
+                                    status: reservation.status,
+                                }));
+    }
+
+    //
+    findOne(userId: number, reservationId: number) {
+        const reservation = this.reservations.find(
+            (reservation) => reservation.id === reservationId,
+        );
+
+        if(!reservation) {
+            throw new NotFoundException('Reservation not found. (対象の予約が見つかりません)');
+        }
+
+        if(reservation.user_id !== userId) {
+            throw new NotFoundException('Reservation not found (あなたの予約ではありません)');
+        }
+
+        const room = this.roomsSerivce.findOne(reservation.room_id);
+
+        return {
+            ...reservation,
+            room: {
+                id: room.id,
+                name: room.name,
+                capacity: room.capacity,
+                price_per_night: room.price_per_night,
+            },
+        };
     }
     
     //Cancel the reservation with the specified ID - 指定したIDの予約をキャンセル

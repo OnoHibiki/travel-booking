@@ -2,26 +2,23 @@ import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/co
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt'; //Hash - ハッシュ
 import { CreateUserDto } from './create-user.dto';
+import { User } from 'src/common/interfaces/user.interface';
+import { UsersService } from 'src/users/users.service';
     
-type User = {
-    id: number;
-    name: string;
-    email: string;
-    prefecture?: string;
-    password_hash: string;
-};
 
 @Injectable()
 export class AuthService {
-    private users: User[] = [];
-    constructor(private readonly jwtService: JwtService){}
+    constructor(
+        private readonly usersService: UsersService,
+        private readonly jwtService: JwtService
+    ){}
 
     // Create new User - 新規ユーザ登録　-----------------------------------------
     async register(createUserDto: CreateUserDto) {
         const { name, email, prefecture, password } = createUserDto;
 
         // Check if the email already exists　-　email重複チェック
-        const existingUser = this.users.find((user) => user.email === email);
+        const existingUser = this.usersService.findByEmail(email);
         if(existingUser) {
             throw new ConflictException(
                 'Email already registered. (このメールアドレスは既に登録されています)'
@@ -31,28 +28,29 @@ export class AuthService {
         // Hash the password before saving - passwordのハッシュ化
         const passwordHash = await bcrypt.hash(password, 10);
 
-        // Create the new user - 新規ユーザの作成
+        // Create a new user - 新規ユーザの作成
         const newUser: User = {
-            id: this.users.length + 1,
+            id: Date.now(), // Todo: Test -　仮
             name,
             email,
             prefecture,
             password_hash: passwordHash
         };
 
-        this.users.push(newUser);
+        this.usersService.createUser(newUser);
 
         return {
             id: newUser.id,
             name: newUser.name,
             email: newUser.email,
             prefecture: newUser.prefecture,
+            // Not return pass - パスワードハッシュは返さない
         };
     }
 
     // Login logic - ログイン機能　-------------------------------------------------
     async login(email: string, password: string) {
-        const user = this.users.find((user) => user.email === email);
+        const user = this.usersService.findByEmail(email);
 
         if(!user) {
             throw new UnauthorizedException(
