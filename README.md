@@ -8,6 +8,8 @@ A full-stack travel booking web application.
 ### Backend
 - NestJS(Node.js)
 - TypeScript
+- Prisma ORM
+- PostgreSQL (Docker)
 
 ### Frontend
 - React
