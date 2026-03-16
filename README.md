@@ -33,3 +33,4 @@ This project follows a simple Git workflow using feature branches.
  - First self PR and merge lol (`feature/reservations` → `develop`): 2026/03/08
  - Going forward, PRs will follow the (`develop` → `main`) workflow : 2026/03/10
  - Implemented JWT authentication and protected APIs: 2026/03/14
+ - Core API implementation completed (Auth, Users, Hotels, Rooms, Reservations): 2026/03/15
