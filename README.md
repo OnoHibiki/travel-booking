@@ -34,3 +34,4 @@ This project follows a simple Git workflow using feature branches.
  - Going forward, PRs will follow the (`develop` → `main`) workflow : 2026/03/10
  - Implemented JWT authentication and protected APIs: 2026/03/14
  - Core API implementation completed (Auth, Users, Hotels, Rooms, Reservations): 2026/03/15
+ - Integrated Prisma ORM and PostgreSQL database (Docker) for User/Auth persistence(very very tired lol): 2026/03/16
