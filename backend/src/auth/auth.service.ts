@@ -2,7 +2,6 @@ import { Injectable, ConflictException, UnauthorizedException, BadRequestExcepti
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt'; //Hash - ハッシュ
 import { CreateUserDto } from './create-user.dto';
-import { User } from 'src/common/interfaces/user.interface';
 import { UsersService } from 'src/users/users.service';
     
 
@@ -18,7 +17,7 @@ export class AuthService {
         const { name, email, prefecture, password } = createUserDto;
 
         // Check if the email already exists　-　email重複チェック
-        const existingUser = this.usersService.findByEmail(email);
+        const existingUser = await this.usersService.findByEmail(email);
         if(existingUser) {
             throw new ConflictException(
                 'Email already registered. (このメールアドレスは既に登録されています)'
@@ -29,15 +28,12 @@ export class AuthService {
         const passwordHash = await bcrypt.hash(password, 10);
 
         // Create a new user - 新規ユーザの作成
-        const newUser: User = {
-            id: Date.now(), // Todo: Test -　仮
+        const newUser = await this.usersService.createUser({
             name,
             email,
             prefecture,
             password_hash: passwordHash
-        };
-
-        this.usersService.createUser(newUser);
+        });
 
         return {
             id: newUser.id,
@@ -50,7 +46,7 @@ export class AuthService {
 
     // Change current user password - パスワード変更
     async updatePassword(userId: number, currentPassword: string, newPassword: string) {
-        const user = this.usersService.findById(userId);
+        const user = await this.usersService.findById(userId);
         
         // Compare current password with stored hash - 現在のパスワード確認
         const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
@@ -70,13 +66,13 @@ export class AuthService {
 
         const newPasswordHash = await bcrypt.hash(newPassword, 10);
 
-        return this.usersService.updatePassword(userId, newPasswordHash);
+        return await this.usersService.updatePassword(userId, newPasswordHash); //users.service
         
     }
 
     // Login logic - ログイン機能　
     async login(email: string, password: string) {
-        const user = this.usersService.findByEmail(email);
+        const user = await this.usersService.findByEmail(email);
         if (!user) {
             throw new UnauthorizedException(
                 'Invalid credentials. (メールアドレスまたはパスワードが正しくありません)'
