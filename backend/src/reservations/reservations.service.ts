@@ -18,7 +18,7 @@ export class ReservationsService {
     constructor(private readonly roomsSerivce: RoomsService) {}
     private reservations: Reservation[] = [];
 
-    createReservation(userId: number, createReservationDto: CreateReservationDto) {
+    async createReservation(userId: number, createReservationDto: CreateReservationDto) {
 
         const { room_id, guest_count, check_in, check_out} = createReservationDto;
         
@@ -28,7 +28,7 @@ export class ReservationsService {
         }
 
         //Find room by room_id - room_idから部屋情報を取得
-        const room = this.roomsSerivce.findOne(room_id);
+        const room = await this.roomsSerivce.findOne(room_id);
 
         // Check room capacity - 部屋の定数を予約人数が超えていないか確認
         if(guest_count > room.capacity) {
@@ -98,7 +98,7 @@ export class ReservationsService {
     }
 
     //
-    findOne(userId: number, reservationId: number) {
+    async findOne(userId: number, reservationId: number) {
         const reservation = this.reservations.find(
             (reservation) => reservation.id === reservationId,
         );
@@ -111,7 +111,7 @@ export class ReservationsService {
             throw new NotFoundException('Reservation not found (あなたの予約ではありません)');
         }
 
-        const room = this.roomsSerivce.findOne(reservation.room_id);
+        const room = await this.roomsSerivce.findOne(reservation.room_id);
 
         return {
             ...reservation,
