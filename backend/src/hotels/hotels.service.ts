@@ -1,42 +1,25 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class HotelsService {
-    //Get all hotels　-　ホテル一覧検索
-    findAll() {
-        return [ // Test Data - テストデータ
-            {
-                id: 1,
-                name: "Tokyo Hotel",
-                prefecture: "東京都",
-                rating:5
-            },
-            {
-                id: 2,
-                name: "Osaka Hotel",
-                prefecture: "大阪府",
-                rating:4
-            },
-            {
-                id: 3,
-            }
-        ];
+    constructor(private readonly prisma: PrismaService){}
+    // Get all hotels　-　ホテル一覧検索
+    async findAll(){
+        return this.prisma.hotel.findMany();
     }
-    
-    //Get a specific hotel's details　-　あるホテルの詳細を取得
-    findOne(hotelId: number) {
-        const hotel = this.findAll().find((h) => h.id === hotelId);
+
+    // Get a specific hotel's details　-　あるホテルの詳細を取得
+    async findOne(hotelId: number) {
+        const hotel = await this.prisma.hotel.findUnique({
+            where: { id: hotelId },
+        });
         
-        //can't find hotel
+        // Can't find hotel - 対象のホテルが見つからない
         if(!hotel) {
             throw new NotFoundException('Hotel not found...');
         }
 
-        return {
-            ...hotel,
-            description: hotelId === 1 ? 'Luxury hotel in Tokyo' : 'Comfortable stay in Osaka', // For testing only! lol
-            cover_image_url: null,
-            address_line: null,
-        };
+        return hotel;
     }
 }
