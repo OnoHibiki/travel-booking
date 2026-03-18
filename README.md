@@ -37,3 +37,5 @@ This project follows a simple Git workflow using feature branches.
  - Implemented JWT authentication and protected APIs: 2026/03/14
  - Core API implementation completed (Auth, Users, Hotels, Rooms, Reservations): 2026/03/15
  - Integrated Prisma ORM and PostgreSQL database (Docker) for User/Auth persistence(very very tired lol): 2026/03/16
+ - Migrated Hotels/Rooms to Prisma: 2026/03/17
+ - Migrated Reservations to Prisma and completed full database migration for all APIs using Prisma and PostgreSQL: 2026/03/18
