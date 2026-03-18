@@ -1,22 +1,14 @@
 import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { CreateReservationDto } from './create-reservation.dto';
 import { RoomsService } from 'src/rooms/rooms.service';
-
-export interface Reservation {
-    id: number;
-    user_id: number;
-    room_id: number;
-    guest_count: number;
-    check_in: string;
-    check_out: string;
-    total_price: number;
-    status: 'CONFIRMED' | 'CANCELLED' ; 
-}
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class ReservationsService {
-    constructor(private readonly roomsSerivce: RoomsService) {}
-    private reservations: Reservation[] = [];
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly roomsService: RoomsService,   
+    ){}
 
     async createReservation(userId: number, createReservationDto: CreateReservationDto) {
 
@@ -28,7 +20,7 @@ export class ReservationsService {
         }
 
         //Find room by room_id - room_idから部屋情報を取得
-        const room = await this.roomsSerivce.findOne(room_id);
+        const room = await this.roomsService.findOne(room_id);
 
         // Check room capacity - 部屋の定数を予約人数が超えていないか確認
         if(guest_count > room.capacity) {
@@ -45,16 +37,15 @@ export class ReservationsService {
         }
         
         // Check if the room is already reserved for the selected dates - 指定された日程で、指定した部屋がすでに予約されていないか確認
-        const overlappedReservation = this.reservations.find((reservation) => {
-            const existingCheckIn = new Date(reservation.check_in);
-            const existingCheckOut = new Date(reservation.check_out);
-
-            return (
-                reservation.room_id === room_id &&
-                reservation.status === 'CONFIRMED' &&
-                checkInDate < existingCheckOut &&
-                checkOutDate > existingCheckIn
-            );
+        const overlappedReservation = await this.prisma.reservation.findFirst({
+            where : {
+                room_id,
+                status: 'CONFIRMED',
+                AND: [
+                    { check_in: { lt: checkOutDate}},
+                    { check_out: { gt: checkInDate}},
+                ],
+            },
         });
 
         if (overlappedReservation) {
@@ -68,40 +59,33 @@ export class ReservationsService {
         const totalPrice = howManyStayNight * pricePerNight;
 
         //Create New Reservation - 新しい予約を登録
-        const newReservation: Reservation = {
-            id: this.reservations.length + 1,
-            user_id: userId, //Test - 仮
-            room_id,
-            guest_count,
-            check_in,
-            check_out,
-            total_price: totalPrice,
-            status: 'CONFIRMED',
-        };
-
-        this.reservations.push(newReservation); //Push new Reservation - 新しい予約を予約一覧へ追加
-
-        return newReservation;
+        return this.prisma.reservation.create({
+            data: {
+                user_id: userId,
+                room_id,
+                guest_count,
+                check_in: checkInDate,
+                check_out: checkOutDate,
+                total_price: totalPrice,
+                status: 'CONFIRMED',
+            },
+        });
     }
 
     //Get My Reservation - 自分の予約一覧を取得
-    findMyReservations(userId: number) {
-        return this.reservations.filter((reservation) => reservation.user_id === userId)
-                                .map((reservation) => ({
-                                    id: reservation.id,
-                                    room_id: reservation.room_id,
-                                    check_in: reservation.check_in,
-                                    check_out: reservation.check_out,
-                                    total_price: reservation.total_price,
-                                    status: reservation.status,
-                                }));
+    async findMyReservations(userId: number){
+        return this.prisma.reservation.findMany({
+            where: { user_id: userId },
+            orderBy: { check_in: 'asc'},
+        });
+
     }
 
-    //
+    //Get My specific Reservation - 自分の特定の予約を取得
     async findOne(userId: number, reservationId: number) {
-        const reservation = this.reservations.find(
-            (reservation) => reservation.id === reservationId,
-        );
+        const reservation = await this.prisma.reservation.findUnique({
+            where: {id: reservationId},
+        });
 
         if(!reservation) {
             throw new NotFoundException('Reservation not found. (対象の予約が見つかりません)');
@@ -111,7 +95,7 @@ export class ReservationsService {
             throw new NotFoundException('Reservation not found (あなたの予約ではありません)');
         }
 
-        const room = await this.roomsSerivce.findOne(reservation.room_id);
+        const room = await this.roomsService.findOne(reservation.room_id);
 
         return {
             ...reservation,
@@ -125,15 +109,17 @@ export class ReservationsService {
     }
     
     //Cancel the reservation with the specified ID - 指定したIDの予約をキャンセル
-    cancelReservation(userId:number, reservationId: number) {
-        const reservation = this.reservations.find((item) => item.id === reservationId);
+    async cancelReservation(userId:number, reservationId: number) {
+        const reservation = await this.prisma.reservation.findUnique({
+            where: { id: reservationId},
+        });
 
         //Check if reservation by ID - 引数のIDの予約があるか確認
         if(!reservation){
             throw new NotFoundException('Reservation is not found. (対象の予約が見つかりません)');
         }
 
-        //Verify ownership (Temporary: fixed user_id check) - 所有権の確認　TODO：今は固定値
+        //Verify ownership - 自分の予約か確認
         if(reservation.user_id !== userId) {
             throw new NotFoundException('Reservation is not found. (対象の予約が見つかりません)');
         }
@@ -144,9 +130,10 @@ export class ReservationsService {
         }
 
         // Update status to CANCELLED - 予約をキャンセル
-        reservation.status = 'CANCELLED';
-
-        return reservation;
+        return this.prisma.reservation.update({
+            where: { id: reservationId },
+            data: { status: 'CANCELLED'},
+        });
 
     }
 
