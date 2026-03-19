@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException, ConflictException }
 import { CreateReservationDto } from './create-reservation.dto';
 import { RoomsService } from 'src/rooms/rooms.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { Reservation, Room } from '@prisma/client';
 
 @Injectable()
 export class ReservationsService {
@@ -9,6 +10,42 @@ export class ReservationsService {
         private readonly prisma: PrismaService,
         private readonly roomsService: RoomsService,   
     ){}
+
+    private toReservationSummary(reservation: Reservation, room?: Room ) {
+        return {
+            id: reservation.id,
+            guestCount: reservation.guest_count,
+            checkIn: reservation.check_in,
+            checkOut: reservation.check_out,
+            totalPrice: reservation.total_price,
+            status: reservation.status,
+            ...(room && {
+                room: {
+                    id: room.id,
+                    name: room.name,
+                },
+            }),
+        };
+    }
+
+    private toReservationDetail(reservation: Reservation, room: Room ) {
+        return {
+            id: reservation.id,
+            guestCount: reservation.guest_count,
+            checkIn: reservation.check_in,
+            checkOut: reservation.check_out,
+            totalPrice: reservation.total_price,
+            status: reservation.status,
+            room: {
+                id: room.id,
+                name: room.name,
+                capacity: room.capacity,
+                pricePerNight: room.price_per_night,
+            },
+        };
+    }
+
+    private 
 
     async createReservation(userId: number, createReservationDto: CreateReservationDto) {
 
@@ -74,10 +111,17 @@ export class ReservationsService {
 
     //Get My Reservation - 自分の予約一覧を取得
     async findMyReservations(userId: number){
-        return this.prisma.reservation.findMany({
+        const reservations = await this.prisma.reservation.findMany({
             where: { user_id: userId },
             orderBy: { check_in: 'asc'},
         });
+
+        return Promise.all(
+            reservations.map(async (reservation) => {
+                const room = await this.roomsService.findOne(reservation.room_id);
+                return this.toReservationSummary(reservation, room);
+            })
+        )
 
     }
 
@@ -97,15 +141,7 @@ export class ReservationsService {
 
         const room = await this.roomsService.findOne(reservation.room_id);
 
-        return {
-            ...reservation,
-            room: {
-                id: room.id,
-                name: room.name,
-                capacity: room.capacity,
-                price_per_night: room.price_per_night,
-            },
-        };
+        return this.toReservationDetail(reservation, room);
     }
     
     //Cancel the reservation with the specified ID - 指定したIDの予約をキャンセル
@@ -130,10 +166,14 @@ export class ReservationsService {
         }
 
         // Update status to CANCELLED - 予約をキャンセル
-        return this.prisma.reservation.update({
+        const updated = await this.prisma.reservation.update({
             where: { id: reservationId },
             data: { status: 'CANCELLED'},
         });
+
+        const room = await this.roomsService.findOne(updated.room_id);
+
+        return this.toReservationDetail(updated, room);
 
     }
 
