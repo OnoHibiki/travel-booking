@@ -39,3 +39,4 @@ This project follows a simple Git workflow using feature branches.
  - Integrated Prisma ORM and PostgreSQL database (Docker) for User/Auth persistence(very very tired lol): 2026/03/16
  - Migrated Hotels/Rooms to Prisma: 2026/03/17
  - Migrated Reservations to Prisma and completed full database migration for all APIs using Prisma and PostgreSQL: 2026/03/18
+ - docs: add UI design (Figma wireframes) to README: 2026/03/21
